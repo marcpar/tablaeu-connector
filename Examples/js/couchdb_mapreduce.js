@@ -1,4 +1,4 @@
-(function() {
+(() => {
     // Create the connector object
     var myConnector = tableau.makeConnector();
 
@@ -16,11 +16,11 @@
         }, {
             id: "y",
             dataType: tableau.dataTypeEnum.int
-        }]
+        }];
 
         var tableSchema = {
-            id: "earthquakeFeed",
-            alias: "Earthquakes with magnitude greater than 4.5 in the last seven days",
+            id: "sampleData",
+            alias: "Sample Data",
             columns: cols
         };
 
@@ -29,14 +29,20 @@
 
     // Download the data
     myConnector.getData = function(table, doneCallback) {
-        $.ajaxSetup({
-            headers : {
-                'Authorization' : 'Basic YWRtaW46YWRtaW5wb2dp'
-            }
-        });
-        $.getJSON("http://localhost:5984/pogidb/_design/test/_view/poging-view", function(resp) {
-            var rows = resp.rows,
-                tableData = [];
+        let connectionData = JSON.parse(tableau.connectionData);
+        let headers = { 'Authorization': 'Basic YWRtaW46YWRtaW5wb2dp' };
+        let limit = connectionData.limit;
+        let couchdb_url = connectionData.couchdb.url;
+        let couchdb_database = connectionData.couchdb.database;
+        let couchdb_designDocument = connectionData.couchdb.designDocument;
+        let couchdb_viewName = connectionData.couchdb.viewName;
+
+        $.ajaxSetup({ headers });
+        $.get(`${couchdb_url}/${couchdb_database}/_design/${couchdb_designDocument}/_view/${couchdb_viewName}`, { 
+            limit: limit
+         }, (resp) => {
+            let rows = resp.rows;
+            let tableData = [];
 
             // Iterate over the JSON object
             for (var i = 0, len = rows.length; i < len; i++) {
@@ -50,16 +56,26 @@
 
             table.appendRows(tableData);
             doneCallback();
-        });
+        }, 'json');
     };
 
     tableau.registerConnector(myConnector);
 
-    // Create event listeners for when the user submits the form
-    $(document).ready(function() {
-        $("#submitButton").click(function() {
+    $(() => {
+        // Create event listeners for when the user submits the form
+        $("#couchdb").submit((e) => {
+            e.preventDefault();
             tableau.connectionName = "CouchDB"; // This will be the data source name in Tableau
+            tableau.connectionData = JSON.stringify({
+                couchdb: {
+                    url: $("#couchdb_url").val(),
+                    database: $("#couchdb_database").val(),
+                    designDocument: $("#couchdb_designDocument").val(),
+                    viewName: $("#couchdb_viewName").val(),
+                },
+                limit: $("#limit").val()
+            });
             tableau.submit(); // This sends the connector object to Tableau
-        });
-    });
+        })
+    })
 })();
