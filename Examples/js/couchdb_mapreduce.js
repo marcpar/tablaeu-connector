@@ -30,124 +30,125 @@
     // Download the data
     myConnector.getData = function(table, doneCallback) {
 
-        let viewQuery = (couchdb) => {
+        let couchdbQuery = {
+            viewQuery: (couchdb) => {
 
-            /**
-             * GetViewQuery constructor
-             *
-             * @param {CouchDB} couchdb 
-             */
-            function GetViewQuery(couchdb) {
-                let headers = { Authorization: couchdb.authorization };
-                let couchdb_url = couchdb.connectionData.couchdb.url;
-                let couchdb_database = couchdb.connectionData.couchdb.database;
-                let couchdb_designDocument = couchdb.connectionData.couchdb.designDocument;
-                let couchdb_viewName = couchdb.connectionData.couchdb.viewName;
-
-                // Set request url
-                this.url = `${couchdb_url}/${couchdb_database}/_design/${couchdb_designDocument}/_view/${couchdb_viewName}`;
-
-                // HTTP Query Parameter
-                this.parameter = {
-
-                    // Set max number of rows to return
-                    limit: couchdb.connectionData.limit
-                }
-
-                // Set http request headers
-                $.ajaxSetup({ headers });
-            };
-
-            /**
-             * Success response callback
-             * 
-             * @param {*} resp HTTP Success Response
-             */
-            GetViewQuery.prototype.success = function(resp) {
-                let rows = resp.rows;
-                let tableData = [];
+                /**
+                 * GetViewQuery constructor
+                 *
+                 * @param {CouchDB} couchdb 
+                 */
+                function GetViewQuery(couchdb) {
+                    let headers = { Authorization: couchdb.authorization };
+                    let couchdb_url = couchdb.connectionData.couchdb.url;
+                    let couchdb_database = couchdb.connectionData.couchdb.database;
+                    let couchdb_designDocument = couchdb.connectionData.couchdb.designDocument;
+                    let couchdb_viewName = couchdb.connectionData.couchdb.viewName;
     
-                // Iterate over the JSON object
-                for (var i = 0, len = rows.length; i < len; i++) {
-                    tableData.push({
-                        "id": rows[i].id,
-                        "name": rows[i].key,
-                        "x": rows[i].value.x,
-                        "y": rows[i].value.y
-                    });
-                }
+                    // Set request url
+                    this.url = `${couchdb_url}/${couchdb_database}/_design/${couchdb_designDocument}/_view/${couchdb_viewName}`;
     
-                table.appendRows(tableData);
-                doneCallback();
-            };
-
-             /**
-              * Runs a query to couchdb server
-              */
-            GetViewQuery.prototype.runQuery = function() {
-                $.get(this.url, this.parameter, this.success, 'json');
-            };
-
-             return new GetViewQuery(couchdb);
-        };
-
-        let documentQuery = (couchdb) => {
-
-            /**
-             * GetDocumentQuery constructor
-             *
-             * @param {CouchDB} couchdb 
-             */
-             function GetDocumentQuery(couchdb) {
-                let headers = { Authorization: couchdb.authorization };
-                let couchdb_url = couchdb.connectionData.couchdb.url;
-                let couchdb_database = couchdb.connectionData.couchdb.database;
-
-                // Set request url
-                this.url = `${couchdb_url}/${couchdb_database}/_all_docs`;
-
-                // HTTP Query Parameter
-                this.parameter = {
-
-                    // Set max number of rows to return
-                    limit: couchdb.connectionData.limit
-                }
-
-                // Set http request headers
-                $.ajaxSetup({ headers });
-            };
-
-            /**
-             * Success response callback
-             * 
-             * @param {*} resp HTTP Success Response
-             */
-            GetDocumentQuery.prototype.success = function(resp) {
-                let rows = resp.rows;
-                let tableData = [];
+                    // HTTP Query Parameter
+                    this.parameter = {
     
-                // Iterate over the JSON object
-                for (var i = 0, len = rows.length; i < len; i++) {
-                    tableData.push({
-                        "id": rows[i].id,
-                        "name": rows[i].key,
-                        "x": rows[i].value.x,
-                        "y": rows[i].value.y
-                    });
-                }
+                        // Set max number of rows to return
+                        limit: couchdb.connectionData.limit
+                    }
     
-                table.appendRows(tableData);
-                doneCallback();
-            };
+                    // Set http request headers
+                    $.ajaxSetup({ headers });
+                };
+    
+                /**
+                 * Success response callback
+                 * 
+                 * @param {*} resp HTTP Success Response
+                 */
+                GetViewQuery.prototype.success = function(resp) {
+                    let rows = resp.rows;
+                    let tableData = [];
+        
+                    // Iterate over the JSON object
+                    for (var i = 0, len = rows.length; i < len; i++) {
+                        tableData.push({
+                            "id": rows[i].id,
+                            "name": rows[i].key,
+                            "x": rows[i].value.x,
+                            "y": rows[i].value.y
+                        });
+                    }
+        
+                    table.appendRows(tableData);
+                    doneCallback();
+                };
+    
+                 /**
+                  * Runs a query to couchdb server
+                  */
+                GetViewQuery.prototype.runQuery = function() {
+                    $.get(this.url, this.parameter, this.success, 'json');
+                };
+    
+                 return new GetViewQuery(couchdb);
+            },
+            documentQuery: (couchdb) => {
 
-             /**
-              * Runs a query to couchdb server
-              */
-            GetDocumentQuery.prototype.runQuery = function() {
-                $.get(this.url, this.parameter, this.success, 'json');
-            };
-
-             return new GetDocumentQuery(couchdb);
+                /**
+                 * GetDocumentQuery constructor
+                 *
+                 * @param {CouchDB} couchdb 
+                 */
+                 function GetDocumentQuery(couchdb) {
+                    let headers = { Authorization: couchdb.authorization };
+                    let couchdb_url = couchdb.connectionData.couchdb.url;
+                    let couchdb_database = couchdb.connectionData.couchdb.database;
+    
+                    // Set request url
+                    this.url = `${couchdb_url}/${couchdb_database}/_all_docs`;
+    
+                    // HTTP Query Parameter
+                    this.parameter = {
+    
+                        // Set max number of rows to return
+                        limit: couchdb.connectionData.limit
+                    }
+    
+                    // Set http request headers
+                    $.ajaxSetup({ headers });
+                };
+    
+                /**
+                 * Success response callback
+                 * 
+                 * @param {*} resp HTTP Success Response
+                 */
+                GetDocumentQuery.prototype.success = function(resp) {
+                    let rows = resp.rows;
+                    let tableData = [];
+        
+                    // Iterate over the JSON object
+                    for (var i = 0, len = rows.length; i < len; i++) {
+                        tableData.push({
+                            "id": rows[i].id,
+                            "name": rows[i].key,
+                            "x": rows[i].value.x,
+                            "y": rows[i].value.y
+                        });
+                    }
+        
+                    table.appendRows(tableData);
+                    doneCallback();
+                };
+    
+                 /**
+                  * Runs a query to couchdb server
+                  */
+                GetDocumentQuery.prototype.runQuery = function() {
+                    $.get(this.url, this.parameter, this.success, 'json');
+                };
+    
+                 return new GetDocumentQuery(couchdb);
+            }
         };
 
         let couchdb = (() => {
@@ -182,11 +183,10 @@
              * @returns {runQuery: function}
              */
             Couchdb.prototype.getQuery = function() {
-                let couchdb = {
+                return couchdbQuery[this.connectionData.couchdb.type]({
                     connectionData: this.connectionData,
                     authorization: this.authorization
-                }
-                return this.connectionData.couchdb.type === 'view' ? viewQuery(couchdb) : documentQuery(couchdb); 
+                });
             };
 
             return new Couchdb();
