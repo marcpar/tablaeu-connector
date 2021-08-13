@@ -4,27 +4,12 @@
 
     // Define the schema
     myConnector.getSchema = function(schemaCallback) {
-        var cols =[{
-            id: "id",
-            dataType: tableau.dataTypeEnum.string
-        },{
-            id: "name",
-            dataType: tableau.dataTypeEnum.string
-        }, {
-            id: "x",
-            dataType: tableau.dataTypeEnum.int
-        }, {
-            id: "y",
-            dataType: tableau.dataTypeEnum.int
-        }];
 
-        var tableSchema = {
-            id: "sampleData",
-            alias: "Sample Data",
-            columns: cols
-        };
+        // Parse connection data
+        const connectionData = JSON.parse(tableau.connectionData);
 
-        schemaCallback([tableSchema]);
+        // Setting the table schema
+        schemaCallback([connectionData.tableSchema]);
     };
 
     // Download the data
@@ -199,12 +184,46 @@
 
     tableau.registerConnector(myConnector);
 
+    // Run after the document loads
     $(() => {
-        // Create event listeners for when the user submits the form
         $("#couchdb").submit((e) => {
+            // Prevent form from submitting
             e.preventDefault();
-            tableau.connectionName = "CouchDB"; // This will be the data source name in Tableau
+
+            // Tableau name of connection.
+            // This will be the data source name in Tableau
+            tableau.connectionName = $("#tableau_connectionName").val();
+
+            // Tableau variables
             tableau.connectionData = JSON.stringify({
+
+                // Table Schema
+                tableSchema: {
+
+                    // Table Schema ID
+                    id: $("#tableSchema_id").val(),
+        
+                    // Table Schema Alias
+                    alias: $("#tableSchema_alias").val(),
+        
+                    // Table Schema Columns
+                    // @todo: Consider making it dynamic
+                    columns: [{
+                        id: "id",
+                        dataType: tableau.dataTypeEnum.string
+                    },{
+                        id: "name",
+                        dataType: tableau.dataTypeEnum.string
+                    }, {
+                        id: "x",
+                        dataType: tableau.dataTypeEnum.int
+                    }, {
+                        id: "y",
+                        dataType: tableau.dataTypeEnum.int
+                    }]
+                },
+
+                // CouchDB Setup
                 couchdb: {
                     type: $("#couchdb_type").val(),
                     url: $("#couchdb_url").val(),
@@ -212,9 +231,13 @@
                     designDocument: $("#couchdb_designDocument").val(),
                     viewName: $("#couchdb_viewName").val(),
                 },
+
+                // max # of rows to show
                 limit: $("#limit").val()
             });
-            tableau.submit(); // This sends the connector object to Tableau
-        })
-    })
+
+            // This sends the connector object to Tableau
+            tableau.submit(); 
+        });
+    });
 })();

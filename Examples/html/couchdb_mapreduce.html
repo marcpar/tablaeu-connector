@@ -36,6 +36,18 @@
             <div class="col-xs-4">
                 <form id="couchdb">
                     <div class="form-group">
+                        <label for="tableau_connectionName">Tableau Connection Name</label>
+                        <input class="form-control" type="text" id="tableau_connectionName" type="text" value="CouchDB" placeholder="Data source name">
+                    </div>
+                    <div class="form-group">
+                        <label for="tableSchema_id">Table Schema ID</label>
+                        <input class="form-control" type="text" id="tableSchema_id" type="text" value="sampleData" placeholder="Should not contain any spaces.">
+                    </div>
+                    <div class="form-group">
+                        <label for="tableSchema_alias">Table Schema Description</label>
+                        <input class="form-control" type="text" id="tableSchema_alias" type="text" value="Sample test data" placeholder="Description of the table.">
+                    </div>
+                    <div class="form-group">
                         <label for="couchdb_type">Type</label>
                         <select class="form-select" id="couchdb_type">
                             <option value="viewQuery">View</option>
