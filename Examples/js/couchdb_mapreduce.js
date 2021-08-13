@@ -91,6 +91,65 @@
              return new GetViewQuery(couchdb);
         };
 
+        let documentQuery = (couchdb) => {
+
+            /**
+             * GetDocumentQuery constructor
+             *
+             * @param {CouchDB} couchdb 
+             */
+             function GetDocumentQuery(couchdb) {
+                let headers = { Authorization: couchdb.authorization };
+                let couchdb_url = couchdb.connectionData.couchdb.url;
+                let couchdb_database = couchdb.connectionData.couchdb.database;
+
+                // Set request url
+                this.url = `${couchdb_url}/${couchdb_database}/_all_docs`;
+
+                // HTTP Query Parameter
+                this.parameter = {
+
+                    // Set max number of rows to return
+                    limit: couchdb.connectionData.limit
+                }
+
+                // Set http request headers
+                $.ajaxSetup({ headers });
+            };
+
+            /**
+             * Success response callback
+             * 
+             * @param {*} resp HTTP Success Response
+             */
+            GetDocumentQuery.prototype.success = function(resp) {
+                let rows = resp.rows;
+                let tableData = [];
+    
+                // Iterate over the JSON object
+                for (var i = 0, len = rows.length; i < len; i++) {
+                    tableData.push({
+                        "id": rows[i].id,
+                        "name": rows[i].key,
+                        "x": rows[i].value.x,
+                        "y": rows[i].value.y
+                    });
+                }
+    
+                table.appendRows(tableData);
+                doneCallback();
+            };
+
+             /**
+              * Runs a query to couchdb server
+              */
+            GetDocumentQuery.prototype.runQuery = function() {
+                $.get(this.url, this.parameter, this.success, 'json');
+            };
+
+             return new GetDocumentQuery(couchdb);
+        };
+
         let couchdb = (() => {
             /**
              * CouchDB constructor
