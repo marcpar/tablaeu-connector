@@ -54,16 +54,8 @@
                     let tableData = [];
         
                     // Iterate over the JSON object
-                    for (var i = 0, len = rows.length; i < len; i++) {
-                        tableData.push({
-                            "id": rows[i].id,
-                            "name": rows[i].key,
-                            "x": rows[i].value.x,
-                            "y": rows[i].value.y
-                        });
-                    }
-        
-                    table.appendRows(tableData);
+                    for (var i = 0, len = rows.length; i < len; i++)couchdb_database
+                    couchdb_database
                     doneCallback();
                 };
     
@@ -186,6 +178,8 @@
 
     // Run after the document loads
     $(() => {
+
+        // Form Submit Event
         $("#couchdb").submit((e) => {
             // Prevent form from submitting
             e.preventDefault();
@@ -239,5 +233,189 @@
             // This sends the connector object to Tableau
             tableau.submit(); 
         });
+
+        // CouchDB Credentials On-Change
+        $("#couchdb_url, #couchdb_username, #couchdb_password").change(handler_credentialsOnChange);
+
+        // CouchDB Database On-Change
+        $("#couchdb_database").change(handler_databaseOnChange);
+
+        // CouchDB Design Document On-Change
+        $("#couchdb_designDocument").change(handler_designDocumentOnChange);
+
+        // Startup script
+        function startup() {
+
+            // Fetch CouchDB Databases
+            handler_credentialsOnChange();
+
+            // List available data types
+            listAvailableDataTypes();
+        }
+
+        // Run startup
+        startup();
     });
+
+    let couchdb_url;
+    let couchdb_credential;
+    let couchdb_database;
+    let couchdb_designDoc;
+    let couchdb_view;
+
+    /**
+     * Returns CouchDB Databases
+     *
+     * @param {string} url 
+     * @param {string} username 
+     * @param {string} password 
+     * @param {function} callback
+     */
+    function getCouchdbDatabases(url, username, password, callback) {
+        couchdb_url = url;
+        couchdb_credential = btoa(`${username}:${password}`);
+        return doRequest(`${couchdb_url}/_all_dbs`, callback)
+    }
+
+    /**
+     * Returns CouchDB Design Docs
+     * @param {string} database 
+     */
+     function getCouchdbDesignDocs(database, callback) {
+        couchdb_database = database;
+        return doRequest(`${couchdb_url}/${couchdb_database}/_design_docs`, callback);
+    }
+
+    /**
+     * Returns CouchDB Views
+     * @param {string} database 
+     */
+     function getCouchdbViews(designDoc, callback) {
+        couchdb_designDoc = designDoc;
+        return doRequest(`${couchdb_url}/${couchdb_database}/${couchdb_designDoc}`, callback);
+    }
+
+    /**
+     * Selects CouchDB View
+     * 
+     * @param {string} view 
+     */
+    function selectCouchdbView(view) {
+        couchdb_view = view;
+    }
+
+    /**
+     * Fills $("#couchdb_database") DOM
+     *
+     * @param {*} data 
+     */
+    function DOM_fillCouchdbDatabases(databases) {
+
+        // Loops through databases
+        databases.forEach((database) => {
+
+            // Fills the $("#couchdb_database") DOM element
+            $("#couchdb_database")[0].append(new Option(database, database));
+        });
+
+        // Get couchdb design docs
+        handler_databaseOnChange();
+    }
+
+    /**
+     * Fills $("#couchdb_designDocument") DOM
+     *
+     * @param {*} data 
+     */
+     function DOM_fillCouchdbDesignDocs(response) {
+
+        $("#couchdb_designDocument")[0].innerHTML = '';
+
+        // Loops through response
+        response.rows.forEach((row) => {
+
+            // Design Document
+            const designDoc = row.id;
+
+            // Fills the $("#couchdb_designDocument") DOM element
+            $("#couchdb_designDocument")[0].add(new Option(designDoc, designDoc));
+        });
+
+        // Get couchdb views
+        handler_designDocumentOnChange();
+    }
+
+    /**
+     * Fills $("#couchdb_designDocument") DOM
+     *
+     * @param {*} data 
+     */
+     function DOM_fillCouchdbViews(response) {
+
+        $("#couchdb_viewName")[0].innerHTML = '';
+        
+        // Loops through response
+        Object.keys(response.views).forEach((view) => {
+
+            // Fills the $("#couchdb_viewName") DOM element
+            $("#couchdb_viewName")[0].add(new Option(view, view));
+        })
+    }
+
+    /**
+     * Credentials On-Change Event Handler
+     */
+    function handler_credentialsOnChange() {
+        let url = $("#couchdb_url").val();
+        let username = $("#couchdb_username").val();
+        let password = $("#couchdb_password").val();
+        getCouchdbDatabases(url, username, password, DOM_fillCouchdbDatabases);
+    }
+
+    /**
+     * Database On-Change Event Handler
+     */
+     function handler_databaseOnChange() {
+        let database = $("#couchdb_database").val();
+        getCouchdbDesignDocs(database, DOM_fillCouchdbDesignDocs);
+    }
+
+    /**
+     * Design Document On-Change Event Handler
+     */
+     function handler_designDocumentOnChange() {
+        let designDoc = $("#couchdb_designDocument").val();
+        getCouchdbViews(designDoc, DOM_fillCouchdbViews);
+    }
+
+    /**
+     * List available data types
+     */
+    function listAvailableDataTypes() {
+        Object.keys(tableau.dataTypeEnum).forEach((dataType) => {
+            const item = document.createElement('li');
+            item.appendChild(document.createTextNode(dataType));
+            $("#tableau_availableDataTypes")[0].appendChild(item);
+        });
+    }
+
+    /**
+     * Runs HTTP Request
+     *
+     * @param {string} url 
+     * @param {function} callback 
+     * @param {string} method
+     * @returns 
+     */
+     function doRequest(url, callback, method = 'GET') {
+        return fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Basic ${couchdb_credential}`
+            }
+        })
+        .then(response => response.json())
+        .then(callback);
+    }
 })();

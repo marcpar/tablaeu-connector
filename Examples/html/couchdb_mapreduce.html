@@ -32,52 +32,85 @@
 </head>
 <body>
     <div class="container">
-        <div class="row">
-            <div class="col-xs-4">
-                <form id="couchdb">
-                    <div class="form-group">
-                        <label for="tableau_connectionName">Tableau Connection Name</label>
-                        <input class="form-control" type="text" id="tableau_connectionName" type="text" value="CouchDB" placeholder="Data source name">
+        <form id="couchdb">
+            <div class="row">
+                <div class="col-sm-6">
+                    <div>
+                        <h2>CouchDB Credentials</h2>
+                        <div class="form-group">
+                            <label for="couchdb_url">CouchDB URL</label>
+                            <input class="form-control" type="text" id="couchdb_url" type="text" value="http://localhost:5984" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input class="form-control" type="text" id="couchdb_username" type="number" value="admin" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input class="form-control" type="password" id="couchdb_password" type="number" value="admin" required>
+                        </div>
+                    </div>
+                    <div>
+                        <h2>View Information</h2>
                     </div>
                     <div class="form-group">
-                        <label for="tableSchema_id">Table Schema ID</label>
-                        <input class="form-control" type="text" id="tableSchema_id" type="text" value="sampleData" placeholder="Should not contain any spaces.">
+                        <div class="form-group">
+                            <label for="couchdb_database">CouchDB Database</label>
+                            <select class="form-control" id="couchdb_database" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="couchdb_designDocument">CouchDB Design Document Name</label>
+                            <select class="form-control" id="couchdb_designDocument" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="couchdb_viewName">CouchDB View Name</label>
+                            <select class="form-control" id="couchdb_viewName" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="limit">Limit</label>
+                            <input class="form-control" type="text" id="limit" type="number" value="2">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="tableSchema_alias">Table Schema Description</label>
-                        <input class="form-control" type="text" id="tableSchema_alias" type="text" value="Sample test data" placeholder="Description of the table.">
+                </div>
+                <div class="col-sm-6">
+                    <div>
+                        <h2>Tableau</h2>
+                        <div class="form-group">
+                            <label for="tableau_connectionName">Tableau Connection Name</label>
+                            <input class="form-control" type="text" id="tableau_connectionName" type="text" value="CouchDB" placeholder="Data source name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tableSchema_id">Table Schema ID</label>
+                            <input class="form-control" type="text" id="tableSchema_id" type="text" value="sampleData" placeholder="Should not contain any spaces." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tableSchema_alias">Table Schema Description</label>
+                            <input class="form-control" type="text" id="tableSchema_alias" type="text" value="Sample test data" placeholder="Description of the table." required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="couchdb_type">Type</label>
-                        <select class="form-select" id="couchdb_type">
-                            <option value="viewQuery">View</option>
-                            <option value="documentQuery">Document</option>
-                        </select>
+                    <div>
+                        <h2>Tableau Fields</h2>
+                        <div class="form-group">
+                            <label for="fields">Fields (Separated by Comma)</label>
+                            <input class="form-control" type="text" id="fields" type="number" placeholder="field1:bool,field2:date,field3:datetime,field4:float,field5:geometry,field6:int,field7:string">
+                        </div>
+                        <div class="col-sm-6">
+                            <h4>Available Fields</h4>
+                            <ul id="couchdb_availableFields"></ul>
+                        </div>
+                        <div class="col-sm-6">
+                            <h4>Available Data Types</h4>
+                            <ul id="tableau_availableDataTypes"></ul>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="couchdb_url">CouchDB URL</label>
-                        <input class="form-control" type="text" id="couchdb_url" type="text" value="http://localhost:5984">
-                    </div>
-                    <div class="form-group">
-                        <label for="couchdb_database">CouchDB Database</label>
-                        <input class="form-control" type="text" id="couchdb_database" type="text" value="pogidb">
-                    </div>
-                    <div class="form-group">
-                        <label for="couchdb_designDocument">CouchDB Design Document Name</label>
-                        <input class="form-control" type="text" id="couchdb_designDocument" type="text" value="test">
-                    </div>
-                    <div class="form-group">
-                        <label for="couchdb_viewName">CouchDB View Name</label>
-                        <input class="form-control" type="text" id="couchdb_viewName" type="text" value="poging-view">
-                    </div>
-                    <div class="form-group">
-                        <label for="limit">Limit</label>
-                        <input class="form-control" type="text" id="limit" type="number" value="2">
-                    </div>
-                    <button class="btn btn-success">Submit</button>
-                </form>
+                </div>
             </div>
-        </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <button class="btn btn-success">Submit</button>
+                </div>
+            </div>
+        </form>
     </div>
 </body>
 <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
