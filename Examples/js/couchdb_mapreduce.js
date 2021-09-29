@@ -66,7 +66,7 @@
                             const column = obj.id;
 
                             // Set value to column in row
-                            row[column] = rows[i].value[column]
+                            row[column] = typeof rows[i].value[column] === 'undefined' ? null : rows[i].value[column]
                         })
 
                         // Add item to tableData
