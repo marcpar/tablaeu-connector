@@ -24,14 +24,14 @@
                  * @param {CouchDB} couchdb 
                  */
                 function GetViewQuery(couchdb) {
-                    let headers = { Authorization: couchdb.authorization };
+                    let headers = { Authorization: `Basic ${couchdb.connectionData.couchdb.credential}` };
                     let couchdb_url = couchdb.connectionData.couchdb.url;
                     let couchdb_database = couchdb.connectionData.couchdb.database;
-                    let couchdb_designDocument = couchdb.connectionData.couchdb.designDocument;
-                    let couchdb_viewName = couchdb.connectionData.couchdb.viewName;
-    
+                    let couchdb_designDoc = couchdb.connectionData.couchdb.designDoc;
+                    let couchdb_view = couchdb.connectionData.couchdb.view;
+
                     // Set request url
-                    this.url = `${couchdb_url}/${couchdb_database}/_design/${couchdb_designDocument}/_view/${couchdb_viewName}`;
+                    this.url = `${couchdb_url}/${couchdb_database}/${couchdb_designDoc}/_view/${couchdb_view}`;
     
                     // HTTP Query Parameter
                     this.parameter = {
@@ -54,77 +54,39 @@
                     let tableData = [];
         
                     // Iterate over the JSON object
-                    for (var i = 0, len = rows.length; i < len; i++)couchdb_database
-                    couchdb_database
+                    for (var i = 0, len = rows.length; i < len; i++) {
+
+                        // Dynamic row based from connectionData.tableSchema.columns
+                        let row = {};
+                        
+                        // Dynamically fill row based on what's specified in table schema
+                        couchdb.connectionData.tableSchema.columns.forEach((obj) => {
+
+                            // Column name
+                            const column = obj.id;
+
+                            // Set value to column in row
+                            row[column] = rows[i].value[column]
+                        })
+
+                        // Add item to tableData
+                        tableData.push(row);
+                    }
+
+                    // Append rows to table viewable to Tableau
+                    table.appendRows(tableData);
+
                     doneCallback();
                 };
     
-                 /**
-                  * Runs a query to couchdb server
-                  */
+                /**
+                 * Runs a query to couchdb server
+                 */
                 GetViewQuery.prototype.runQuery = function() {
                     $.get(this.url, this.parameter, this.success, 'json');
                 };
     
-                 return new GetViewQuery(couchdb);
-            },
-            documentQuery: (couchdb) => {
-
-                /**
-                 * GetDocumentQuery constructor
-                 *
-                 * @param {CouchDB} couchdb 
-                 */
-                 function GetDocumentQuery(couchdb) {
-                    let headers = { Authorization: couchdb.authorization };
-                    let couchdb_url = couchdb.connectionData.couchdb.url;
-                    let couchdb_database = couchdb.connectionData.couchdb.database;
-    
-                    // Set request url
-                    this.url = `${couchdb_url}/${couchdb_database}/_all_docs`;
-    
-                    // HTTP Query Parameter
-                    this.parameter = {
-    
-                        // Set max number of rows to return
-                        limit: couchdb.connectionData.limit
-                    }
-    
-                    // Set http request headers
-                    $.ajaxSetup({ headers });
-                };
-    
-                /**
-                 * Success response callback
-                 * 
-                 * @param {*} resp HTTP Success Response
-                 */
-                GetDocumentQuery.prototype.success = function(resp) {
-                    let rows = resp.rows;
-                    let tableData = [];
-        
-                    // Iterate over the JSON object
-                    for (var i = 0, len = rows.length; i < len; i++) {
-                        tableData.push({
-                            "id": rows[i].id,
-                            "name": rows[i].key,
-                            "x": rows[i].value.x,
-                            "y": rows[i].value.y
-                        });
-                    }
-        
-                    table.appendRows(tableData);
-                    doneCallback();
-                };
-    
-                 /**
-                  * Runs a query to couchdb server
-                  */
-                GetDocumentQuery.prototype.runQuery = function() {
-                    $.get(this.url, this.parameter, this.success, 'json');
-                };
-    
-                 return new GetDocumentQuery(couchdb);
+                return new GetViewQuery(couchdb);
             }
         };
 
@@ -133,18 +95,6 @@
              * CouchDB constructor
              */
             function Couchdb() { this.connectionData = JSON.parse(tableau.connectionData) };
-
-            /**
-             * Sets up the authorization header to create an authenticated request in CouchDB
-             *
-             * @param {string} username CouchDB Username
-             * @param {string} password CouchDB Password
-             * @returns {CouchDB} This instance
-             */
-            Couchdb.prototype.login = function(username, password) {
-                this.authorization = `Basic ${btoa(`${username}:${password}`)}`;
-                return this;
-            };
 
             /**
              * Runs couchdb command, implemented in an object that has 'runQuery' method
@@ -160,18 +110,15 @@
              * @returns {runQuery: function}
              */
             Couchdb.prototype.getQuery = function() {
-                return couchdbQuery[this.connectionData.couchdb.type]({
-                    connectionData: this.connectionData,
-                    authorization: this.authorization
+                return couchdbQuery['viewQuery']({
+                    connectionData: this.connectionData
                 });
             };
 
             return new Couchdb();
         })();
 
-        couchdb
-            .login('admin', 'adminpogi')
-            .runQuery(couchdb.getQuery());
+        couchdb.runQuery(couchdb.getQuery());
     };
 
     tableau.registerConnector(myConnector);
@@ -201,29 +148,16 @@
                     alias: $("#tableSchema_alias").val(),
         
                     // Table Schema Columns
-                    // @todo: Consider making it dynamic
-                    columns: [{
-                        id: "id",
-                        dataType: tableau.dataTypeEnum.string
-                    },{
-                        id: "name",
-                        dataType: tableau.dataTypeEnum.string
-                    }, {
-                        id: "x",
-                        dataType: tableau.dataTypeEnum.int
-                    }, {
-                        id: "y",
-                        dataType: tableau.dataTypeEnum.int
-                    }]
+                    columns: tableau_columns
                 },
 
                 // CouchDB Setup
                 couchdb: {
-                    type: $("#couchdb_type").val(),
-                    url: $("#couchdb_url").val(),
-                    database: $("#couchdb_database").val(),
-                    designDocument: $("#couchdb_designDocument").val(),
-                    viewName: $("#couchdb_viewName").val(),
+                    url: couchdb_url,
+                    credential: couchdb_credential,
+                    database: couchdb_database,
+                    designDoc: couchdb_designDoc,
+                    view: couchdb_view
                 },
 
                 // max # of rows to show
@@ -242,6 +176,12 @@
 
         // CouchDB Design Document On-Change
         $("#couchdb_designDocument").change(handler_designDocumentOnChange);
+
+        // CouchDB View On-Change        
+        $("#couchdb_viewName").change(handler_viewOnChange);
+
+        // Tableau Columns On-Change
+        $("#tableau_columns").change(handler_tableauColumnsOnChange);
 
         // Startup script
         function startup() {
@@ -262,6 +202,7 @@
     let couchdb_database;
     let couchdb_designDoc;
     let couchdb_view;
+    let tableau_columns;
 
     /**
      * Returns CouchDB Databases
@@ -281,7 +222,7 @@
      * Returns CouchDB Design Docs
      * @param {string} database 
      */
-     function getCouchdbDesignDocs(database, callback) {
+    function getCouchdbDesignDocs(database, callback) {
         couchdb_database = database;
         return doRequest(`${couchdb_url}/${couchdb_database}/_design_docs`, callback);
     }
@@ -290,18 +231,9 @@
      * Returns CouchDB Views
      * @param {string} database 
      */
-     function getCouchdbViews(designDoc, callback) {
+    function getCouchdbViews(designDoc, callback) {
         couchdb_designDoc = designDoc;
         return doRequest(`${couchdb_url}/${couchdb_database}/${couchdb_designDoc}`, callback);
-    }
-
-    /**
-     * Selects CouchDB View
-     * 
-     * @param {string} view 
-     */
-    function selectCouchdbView(view) {
-        couchdb_view = view;
     }
 
     /**
@@ -327,7 +259,7 @@
      *
      * @param {*} data 
      */
-     function DOM_fillCouchdbDesignDocs(response) {
+    function DOM_fillCouchdbDesignDocs(response) {
 
         $("#couchdb_designDocument")[0].innerHTML = '';
 
@@ -350,7 +282,7 @@
      *
      * @param {*} data 
      */
-     function DOM_fillCouchdbViews(response) {
+    function DOM_fillCouchdbViews(response) {
 
         $("#couchdb_viewName")[0].innerHTML = '';
         
@@ -359,7 +291,9 @@
 
             // Fills the $("#couchdb_viewName") DOM element
             $("#couchdb_viewName")[0].add(new Option(view, view));
-        })
+        });
+
+        handler_viewOnChange();
     }
 
     /**
@@ -375,7 +309,7 @@
     /**
      * Database On-Change Event Handler
      */
-     function handler_databaseOnChange() {
+    function handler_databaseOnChange() {
         let database = $("#couchdb_database").val();
         getCouchdbDesignDocs(database, DOM_fillCouchdbDesignDocs);
     }
@@ -383,9 +317,39 @@
     /**
      * Design Document On-Change Event Handler
      */
-     function handler_designDocumentOnChange() {
+    function handler_designDocumentOnChange() {
         let designDoc = $("#couchdb_designDocument").val();
         getCouchdbViews(designDoc, DOM_fillCouchdbViews);
+    }
+
+    /**
+     * View On-Change Event Handler
+     */
+    function handler_viewOnChange() {
+        couchdb_view = $("#couchdb_viewName").val();
+    }
+
+    /**
+     * Tableau Fields On-Change Event Handler
+     */
+    function handler_tableauColumnsOnChange() {
+
+        // Clear tableau columns
+        tableau_columns = [];
+
+        // Split columns separated by comma
+        const columns = $("#tableau_columns").val().split(',');
+
+        // Loop through columns and add valid columns at the same time
+        columns.forEach((column) => {
+            const [id, type] = column.trim().split(':').map((i) => i.trim());
+            if (typeof tableau.dataTypeEnum[type] === "undefined") {
+                alert(`Data type: "${dataType}" is invalid. Please use the available data types listed.`);
+                return;
+            }
+            const dataType = tableau.dataTypeEnum[type];
+            tableau_columns.push({ id, dataType })
+        });
     }
 
     /**
