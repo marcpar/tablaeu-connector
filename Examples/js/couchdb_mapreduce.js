@@ -355,7 +355,7 @@
     function handler_toOnChange() {
         couchdb_to = $("#couchdb_to").val();
         couchdb_to = couchdb_to === '' ? '' : + new Date(couchdb_to);
-        couchdb_to = couchdb_to === '' ? '' : '' + `startkey=${couchdb_to}&`;
+        couchdb_to = couchdb_to === '' ? '' : '' + `endkey=${couchdb_to}&`;
     }
 
     /**
