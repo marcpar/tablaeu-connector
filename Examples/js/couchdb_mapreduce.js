@@ -29,17 +29,13 @@
                     let couchdb_database = couchdb.connectionData.couchdb.database;
                     let couchdb_designDoc = couchdb.connectionData.couchdb.designDoc;
                     let couchdb_view = couchdb.connectionData.couchdb.view;
+                    let couchdb_from = couchdb.connectionData.couchdb.from;
+                    let couchdb_to = couchdb.connectionData.couchdb.to;
+                    let couchdb_query = couchdb.connectionData.couchdb.query;
 
                     // Set request url
-                    this.url = `${couchdb_url}/${couchdb_database}/${couchdb_designDoc}/_view/${couchdb_view}`;
-    
-                    // HTTP Query Parameter
-                    this.parameter = {
-    
-                        // Set max number of rows to return
-                        limit: couchdb.connectionData.limit
-                    }
-    
+                    this.url = `${couchdb_url}/${couchdb_database}/${couchdb_designDoc}/_view/${couchdb_view}?${couchdb_from}${couchdb_to}${couchdb_query}`;
+  
                     // Set http request headers
                     $.ajaxSetup({ headers });
                 };
@@ -83,7 +79,7 @@
                  * Runs a query to couchdb server
                  */
                 GetViewQuery.prototype.runQuery = function() {
-                    $.get(this.url, this.parameter, this.success, 'json');
+                    $.get(this.url, {}, this.success, 'json');
                 };
     
                 return new GetViewQuery(couchdb);
@@ -157,7 +153,10 @@
                     credential: couchdb_credential,
                     database: couchdb_database,
                     designDoc: couchdb_designDoc,
-                    view: couchdb_view
+                    view: couchdb_view,
+                    from: couchdb_from,
+                    to: couchdb_to,
+                    query: couchdb_query
                 },
 
                 // max # of rows to show
@@ -179,6 +178,15 @@
 
         // CouchDB View On-Change        
         $("#couchdb_viewName").change(handler_viewOnChange);
+
+        // CouchDB From On-Change
+        $("#couchdb_from").change(handler_fromOnChange);
+
+        // CouchDB To On-Change
+        $("#couchdb_to").change(handler_toOnChange);
+
+        // CouchDB Query On-Change
+        $("#couchdb_query").change(handler_queryOnChange);
 
         // Tableau Columns On-Change
         $("#tableau_columns").change(handler_tableauColumnsOnChange);
@@ -202,6 +210,9 @@
     let couchdb_database;
     let couchdb_designDoc;
     let couchdb_view;
+    let couchdb_from = '';
+    let couchdb_to = '';
+    let couchdb_query = '';
     let tableau_columns;
 
     /**
@@ -327,6 +338,31 @@
      */
     function handler_viewOnChange() {
         couchdb_view = $("#couchdb_viewName").val();
+    }
+
+    /**
+     * View On-Change Event Handler
+     */
+    function handler_fromOnChange() {
+        couchdb_from = $("#couchdb_from").val();
+        couchdb_from = couchdb_from === '' ? '' : + new Date(couchdb_from);
+        couchdb_from = couchdb_from === '' ? '' : '' + `startkey=${couchdb_from}&`;
+    }
+
+    /**
+     * View On-Change Event Handler
+     */
+    function handler_toOnChange() {
+        couchdb_to = $("#couchdb_to").val();
+        couchdb_to = couchdb_to === '' ? '' : + new Date(couchdb_to);
+        couchdb_to = couchdb_to === '' ? '' : '' + `startkey=${couchdb_to}&`;
+    }
+
+    /**
+     * View On-Change Event Handler
+     */
+    function handler_queryOnChange() {
+        couchdb_query = $("#couchdb_query").val();
     }
 
     /**
