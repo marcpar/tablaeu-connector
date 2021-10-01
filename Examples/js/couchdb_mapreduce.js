@@ -56,13 +56,16 @@
                         let row = {};
                         
                         // Dynamically fill row based on what's specified in table schema
-                        couchdb.connectionData.tableSchema.columns.forEach((obj) => {
+                        couchdb.connectionData.tableSchema.columns.forEach((obj, index) => {
 
                             // Column name
                             const column = obj.id;
 
+                            // Column value in row
+                            const value = _readRow(rows[i], couchdb.connectionData.column_paths[index]);
+
                             // Set value to column in row
-                            row[column] = typeof rows[i].value[column] === 'undefined' ? null : rows[i].value[column]
+                            row[column] = typeof value === 'undefined' ? null : value;
                         })
 
                         // Add item to tableData
@@ -81,6 +84,23 @@
                 GetViewQuery.prototype.runQuery = function() {
                     $.get(this.url, {}, this.success, 'json');
                 };
+
+                /**
+                 * Reads row on specific path
+                 *
+                 * @param {*} row 
+                 * @param {*} path 
+                 * @param {boolean} not_root 
+                 */
+                function _readRow(row, path, not_root = false) {
+                    const _path = path.split('.');
+                    let value = row;
+                    if (!couchdb.connectionData.root_document && not_root === false) {
+                        return _readRow(row.value, path, true);
+                    }
+                    _path.forEach((key) => { value = value[key] });
+                    return value;
+                }
     
                 return new GetViewQuery(couchdb);
             }
@@ -159,6 +179,12 @@
                     query: couchdb_query
                 },
 
+                // Whether we read from the root document of result
+                root_document: tableau_root_document,
+
+                // Path to column
+                column_paths: tableau_column_paths,
+
                 // max # of rows to show
                 limit: $("#limit").val()
             });
@@ -191,6 +217,9 @@
         // Tableau Columns On-Change
         $("#tableau_columns").change(handler_tableauColumnsOnChange);
 
+        // Tableau Root Document On-Change
+        $("#tableau_root_document").change(handler_tableauRootDocumentOnChange);
+
         // Startup script
         function startup() {
 
@@ -214,6 +243,8 @@
     let couchdb_to = '';
     let couchdb_query = '';
     let tableau_columns;
+    let tableau_column_paths;
+    let tableau_root_document = false;
 
     /**
      * Returns CouchDB Databases
@@ -372,20 +403,30 @@
 
         // Clear tableau columns
         tableau_columns = [];
+        tableau_column_paths = [];
 
         // Split columns separated by comma
         const columns = $("#tableau_columns").val().split(',');
 
         // Loop through columns and add valid columns at the same time
         columns.forEach((column) => {
-            const [id, type] = column.trim().split(':').map((i) => i.trim());
+            const [path, type] = column.trim().split(':').map((i) => i.trim());
+            const id = path.split('.')[path.split('.').length - 1];
             if (typeof tableau.dataTypeEnum[type] === "undefined") {
                 alert(`Data type: "${dataType}" is invalid. Please use the available data types listed.`);
                 return;
             }
             const dataType = tableau.dataTypeEnum[type];
-            tableau_columns.push({ id, dataType })
+            tableau_columns.push({ id, dataType });
+            tableau_column_paths.push(path);
         });
+    }
+
+    /**
+     * Tableau Root Document On-Change
+     */
+    function handler_tableauRootDocumentOnChange() {
+        tableau_root_document = $('#tableau_root_document').is(':checked');
     }
 
     /**
